@@ -65,7 +65,7 @@ app.patch("/updateuser" , async(req , res) =>{
     
     const userId = req.body._id ; 
     try {
-        const updateduser = await UserModel.findByIdAndUpdate({_id:userId} , {updatedDeatils});
+        const updateduser = await UserModel.findByIdAndUpdate({_id:userId} , {updatedDeatils:updatedDeatils});
         console.log(updateduser);
         console.log("user updated sucessfulyy");
         res.status(200).send(updateduser);

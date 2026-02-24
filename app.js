@@ -2,27 +2,52 @@ const express = require("express");
 const connectdb = require("./utils/db");
 const UserModel = require("./models/userModel");
 const app = express();
+const bycrypt = require("bcrypt")
 
 app.use(express.json());
 
 // signup
 app.post("/signup" , async (req , res) =>{
 try{ 
-
-    const user  = new UserModel(req.body);
+    const {firstName , lastName , emailId , password , mobileNumber} = req.body
+    const hashpassword =  await bycrypt.hash(password , 10)
+    const user  = new UserModel({
+        firstName , lastName , emailId , password:hashpassword , mobileNumber
+    });
     await user.save();
     res.status(200).send("useer added succesfullly");
 } catch (error) {
-    console.error("went wrong");
-    res.status(400).send("error" , error.message)
+    console.error(error.message);
+    res.status(400).send(error.message)
     
 }
-
-console.log(req);
-
 })
 
-//login
+// login
+app.post("/login" , async(req , res) =>{
+    const {emailId ,  password} = req.body ;
+    try {
+        const userdata = await UserModel.findOne({emailId});
+        if(!userdata){
+           return res.status(400).send("invalid creds")
+        };
+        const validatepassword = await bycrypt.compare(password , userdata.password);
+        
+        if(!validatepassword){
+            return res.status(400).send("invalid creds");
+        }
+        res.status(200).send("login succesfully")
+        
+
+        
+    } catch (error) {
+        console.error(error.message);
+        res.status(404).send(error.message)
+        
+    }
+})
+
+//get data
 app.get("/getuser" , async(req , res) =>{
     const userEmail = req.body.emailId ;
 
@@ -65,7 +90,7 @@ app.patch("/updateuser" , async(req , res) =>{
     
     const userId = req.body._id ; 
     try {
-        const updateduser = await UserModel.findByIdAndUpdate({_id:userId} , {updatedDeatils:updatedDeatils});
+        const updateduser = await UserModel.findByIdAndUpdate({_id:userId} , {updatedDeatils:updatedDeatils} , {runValidators:true});
         console.log(updateduser);
         console.log("user updated sucessfulyy");
         res.status(200).send(updateduser);
